@@ -1,0 +1,7 @@
+{
+  "name": "jeff",
+  "targetType": "executable",
+  "dependencies": {
+    "dscord": {"path": "../dscord/"}
+  }
+}
