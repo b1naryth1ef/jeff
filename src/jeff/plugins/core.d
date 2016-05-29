@@ -1,5 +1,7 @@
 module jeff.plugins.core;
 
+import std.format;
+
 import dscord.core;
 
 class CorePlugin : Plugin {
@@ -9,7 +11,7 @@ class CorePlugin : Plugin {
   }
 
   @Command("about")
-  void onAboutCommand(MessageCreate event) {
-    event.message.reply("hi, im jeff by b1nzy :^)");
+  void onAboutCommand(CommandEvent event) {
+    event.msg.reply("hi, im jeff by b1nzy :^)");
   }
 }

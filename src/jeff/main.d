@@ -1,6 +1,7 @@
 module jeff.main;
 
 import vibe.core.core;
+import std.experimental.logger;
 import std.stdio,
        std.format;
 
@@ -17,7 +18,7 @@ class JeffBot : Bot {
     bc.token = token;
     bc.cmdPrefix = "";
     bc.lvlGetter = (u) => (u.id == this.owner) ? 1 : 0;
-    super(bc);
+    super(bc, LogLevel.info);
 
     // Add some plugins
     this.addPlugin(new CorePlugin);

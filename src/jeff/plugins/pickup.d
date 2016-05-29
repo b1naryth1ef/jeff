@@ -1,14 +1,17 @@
 module jeff.plugins.pickup;
 
+import std.conv;
+
 import dscord.core;
 
 class PickupGame {
   Snowflake  channel;
+  ushort     numPlayers;
 
-  string game = "";
-  ushort players = 10;
+  ModelMap!(Snowflake, User)  players;
 
   this(Snowflake chan) {
+    this.players = new ModelMap!(Snowflake, User);
     this.channel = chan;
   }
 
@@ -26,27 +29,41 @@ class PickupPlugin : Plugin {
     super(cfg);
   }
 
-  @Command("start")
-  void onStartCommand(MessageCreate event) {
-    if (games.has(event.message.channelID)) {
-      event.message.reply("There is already a pug running in this channel!");
-      return;
+  @Command("start", "<players>")
+  void onStartCommand(CommandEvent event) {
+    if (event.args.length < 1) {
+      return event.msg.reply("Usage: start <players>");
     }
 
-    auto game = new PickupGame(event.message.channelID);
+    if (games.has(event.msg.channelID)) {
+      return event.msg.reply("There is already a pug running in this channel!");
+    }
+
+    auto game = new PickupGame(event.msg.channelID);
+    try {
+      this.log.infof("%s", event.args[0]);
+      game.numPlayers = to!(ushort)(event.args[0]);
+    } catch (Exception e) {
+      return event.msg.reply("Invalid number of players!");
+    }
     this.games[game.channel] = game;
-    event.message.reply("Alright, its pug time!");
+    event.msg.reply("Alright, its pug time!");
+  }
+
+  @Command("join")
+  void onJoinCommand(CommandEvent event) {
+
   }
 
   @Command("end")
-  void onEndCommand(MessageCreate event) {
-    if (!games.has(event.message.channelID)) {
-      event.message.reply("There is no pug running in this channel!");
+  void onEndCommand(CommandEvent event) {
+    if (!games.has(event.msg.channelID)) {
+      event.msg.reply("There is no pug running in this channel!");
       return;
     }
 
-    this.games[event.message.channelID].end();
-    this.games.remove(event.message.channelID);
-    event.message.reply("OK, pug ended.");
+    this.games[event.msg.channelID].end();
+    this.games.remove(event.msg.channelID);
+    event.msg.reply("OK, pug ended.");
   }
 }
