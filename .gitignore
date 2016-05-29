@@ -1,3 +1,4 @@
 .dub
 *jeff
 !*jeff/
+logs/
