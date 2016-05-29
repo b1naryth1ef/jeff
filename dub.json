@@ -2,6 +2,7 @@
   "name": "jeff",
   "targetType": "executable",
   "dependencies": {
-    "dscord": {"path": "../dscord/"}
+    "dscord": {"path": "../dscord/"},
+    "hibernated": "~>0.2.26"
   }
 }

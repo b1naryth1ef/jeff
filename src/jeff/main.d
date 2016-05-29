@@ -21,8 +21,8 @@ class JeffBot : Bot {
     super(bc, LogLevel.info);
 
     // Add some plugins
-    this.addPlugin(new CorePlugin);
-    this.addPlugin(new PickupPlugin);
+    this.loadPlugin(new CorePlugin);
+    this.loadPlugin(new PickupPlugin);
   }
 }
 

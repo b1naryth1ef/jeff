@@ -25,11 +25,10 @@ class PickupPlugin : Plugin {
     this.games = new ModelMap!(Snowflake, PickupGame);
 
     PluginConfig cfg;
-    cfg.cmdPrefixes = ["pug", "pu"];
     super(cfg);
   }
 
-  @Command("start", "<players>")
+  @Command("start", "start a pug", "pug", false, 1)
   void onStartCommand(CommandEvent event) {
     if (event.args.length < 1) {
       return event.msg.reply("Usage: start <players>");
@@ -50,12 +49,12 @@ class PickupPlugin : Plugin {
     event.msg.reply("Alright, its pug time!");
   }
 
-  @Command("join")
+  @Command("join", "join the pug", "pug")
   void onJoinCommand(CommandEvent event) {
 
   }
 
-  @Command("end")
+  @Command("end", "end a pug", "pug", false, 1)
   void onEndCommand(CommandEvent event) {
     if (!games.has(event.msg.channelID)) {
       event.msg.reply("There is no pug running in this channel!");
