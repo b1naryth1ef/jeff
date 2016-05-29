@@ -15,7 +15,7 @@ struct MsgLogConfig {
   bool console = true;
   bool fs = false;
   bool allowSearch = false;
-  string[] searchCommand = ["sift", "-i"];
+  string[] searchCommand = ["sift", "-i", "--no-filename"];
 }
 
 class MsgLogPlugin : Plugin {
@@ -35,22 +35,10 @@ class MsgLogPlugin : Plugin {
     }
   }
 
-  @Command("search", "search message logs", "log", false, 1)
-  void onSearchCommand(CommandEvent event) {
-    auto match = event.contents.matchFirst(this.searchMatch);
-    if (!match.length) {
-      event.msg.reply("Invalid search string");
-      return;
-    }
+  void searchForLogs(CommandEvent event, string query, string path) {
+    string[] command = this.cfg.searchCommand ~ [`"` ~ query ~ `"`, path]; 
 
-    if (!event.msg.channel) {
-      event.msg.reply("Cannot search PM's");
-      return;
-    }
-
-    // Construct the path and command
-    string path = format("logs/%s/%s.txt", event.msg.guild.id, event.msg.channel.id);
-    string[] command = this.cfg.searchCommand ~ [`"` ~ event.contents ~ `"`, path]; 
+    this.log.infof("running `%s`", command.join(" "));
 
     // Run the process in a shell
     auto process = pipeShell(command.join(" "), Redirect.stdout | Redirect.stderr);
@@ -59,6 +47,12 @@ class MsgLogPlugin : Plugin {
     string[] lines;
     foreach (line; process.stdout.byLine) lines ~= line.idup;
     reverse(lines);
+
+    if (!lines.length) {
+      return;
+    }
+
+    this.log.infof("lines: %s", lines);
 
     // Reverse iterate over it, generating lines until we hit the limit
     string[] output;
@@ -90,6 +84,7 @@ class MsgLogPlugin : Plugin {
     // If we don't have anything, tell the user
     if (!output.length) {
       event.msg.reply("No results found!");
+      return;
     }
 
     // Re-reverse the array
@@ -97,6 +92,37 @@ class MsgLogPlugin : Plugin {
 
     // Otherwise dump our messages out
     event.msg.reply("```" ~ output.join("\n") ~ "```");
+
+  }
+
+  @Command("search global", "search message logs globally", "log", false, 1)
+  void onSearchCommandGlobal(CommandEvent event) {
+    auto match = event.contents.matchFirst(this.searchMatch);
+    if (!match.length) {
+      event.msg.reply("Invalid search string");
+      return;
+    }
+
+    // Construct the path and command
+    this.searchForLogs(event, event.contents, "logs/");
+  }
+
+  @Command("search here", "search message logs here", "log", false, 1)
+  void onSearchCommand(CommandEvent event) {
+    auto match = event.contents.matchFirst(this.searchMatch);
+    if (!match.length) {
+      event.msg.reply("Invalid search string");
+      return;
+    }
+
+    if (!event.msg.channel) {
+      event.msg.reply("Cannot search PM's");
+      return;
+    }
+
+    // Construct the path and command
+    string path = format("logs/%s/%s.txt", event.msg.guild.id, event.msg.channel.id);
+    this.searchForLogs(event, event.contents, path);
   }
 
   @Listener!MessageCreate()

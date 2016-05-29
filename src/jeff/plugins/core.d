@@ -26,12 +26,8 @@ class CorePlugin : Plugin {
     });
   }
 
-  @Command("about")
-  void onAboutCommand(CommandEvent event) {
-    event.msg.reply("hi, im jeff by b1nzy :^)");
-  }
-
-  @Command("event stats")
+  // Events stuff
+  @Command("counts", "view event counters", "event", false, 1)
   void onEventStats(CommandEvent event) {
     ushort numEvents = 5;
     if (event.args.length >= 1) {
@@ -44,5 +40,21 @@ class CorePlugin : Plugin {
     }
 
     event.msg.reply("```" ~ parts.join("\n") ~ "```");
+  }
+
+  @Command("show", "show stats on specific event", "event", false, 1)
+  void onEvent(CommandEvent event) {
+    if (event.args.length < 1) {
+      event.msg.reply("Please pass an event to view");
+      return;
+    }
+
+    auto eventName = event.args[0];
+    if (!(eventName in this.counter.storage)) {
+      event.msg.reply("I don't know about that event (yet)");
+      return;
+    }
+
+    event.msg.reply(format("I've seen %s event a total of `%s` times!", eventName, this.counter.storage[eventName]));
   }
 }
