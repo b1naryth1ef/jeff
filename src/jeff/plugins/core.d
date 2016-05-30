@@ -26,6 +26,11 @@ class CorePlugin : Plugin {
     });
   }
 
+  @Command("ping")
+  void onPing(CommandEvent event) {
+    event.msg.reply("PONG");
+  }
+
   // Events stuff
   @Command("counts", "view event counters", "event", false, 1)
   void onEventStats(CommandEvent event) {

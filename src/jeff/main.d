@@ -19,7 +19,7 @@ class JeffBot : Bot {
     bc.token = token;
     bc.cmdPrefix = "";
     bc.lvlGetter = (u) => (u.id == this.owner) ? 100 : 0;
-    super(bc, LogLevel.info);
+    super(bc, LogLevel.trace);
 
     // Add some plugins
     this.loadPlugin(new CorePlugin);
