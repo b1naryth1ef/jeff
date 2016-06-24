@@ -3,5 +3,10 @@
   "targetType": "executable",
   "dependencies": {
     "dscord": {"path": "../dscord/"}
-  }
+  },
+  "subPackages": [
+    "./plugins/jeffcore/",
+    "./plugins/msglog/",
+    "./plugins/pickup/"
+  ]
 }

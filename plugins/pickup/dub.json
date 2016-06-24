@@ -1,0 +1,7 @@
+{
+  "name": "pickup",
+  "targetType": "dynamicLibrary",
+  "dependencies": {
+    "jeff": {"path": "../../"}
+  }
+}

@@ -7,10 +7,6 @@ import std.stdio,
 
 import dscord.core;
 
-import jeff.plugins.core : CorePlugin;
-import jeff.plugins.pickup : PickupPlugin;
-import jeff.plugins.msglog : MsgLogPlugin, MsgLogConfig;
-
 class JeffBot : Bot {
   immutable Snowflake owner = 80351110224678912;
 
@@ -19,14 +15,11 @@ class JeffBot : Bot {
     bc.token = token;
     bc.cmdPrefix = "";
     bc.lvlGetter = (u) => (u.id == this.owner) ? 100 : 0;
-    super(bc, LogLevel.trace);
+    super(bc, LogLevel.info);
 
     // Add some plugins
-    this.loadPlugin(new CorePlugin);
-    // this.loadPlugin(new PickupPlugin);
-    this.loadPlugin(new MsgLogPlugin(
-      MsgLogConfig(true, true, true)
-    ));
+    this.dynamicLoadPlugin("plugins/jeffcore/libjeffcore.so");
+    this.dynamicLoadPlugin("plugins/msglog/libmsglog.so");
   }
 }
 

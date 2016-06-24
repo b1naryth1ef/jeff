@@ -1,4 +1,4 @@
-module jeff.plugins.msglog;
+module msglog;
 
 import std.stdio,
        std.file,
@@ -13,8 +13,8 @@ import dscord.core;
 
 struct MsgLogConfig {
   bool console = true;
-  bool fs = false;
-  bool allowSearch = false;
+  bool fs = true;
+  bool allowSearch = true;
   string[] searchCommand = ["sift", "-i", "--no-filename"];
 }
 
@@ -24,9 +24,7 @@ class MsgLogPlugin : Plugin {
 
   StaticRegex!char searchMatch = ctRegex!(r"^[a-zA-Z0-9_\.\* ]*$");
 
-  this(MsgLogConfig cfg) {
-    this.cfg = cfg;
-
+  this() {
     PluginConfig pcfg;
     super(pcfg);
 
@@ -36,9 +34,7 @@ class MsgLogPlugin : Plugin {
   }
 
   void searchForLogs(CommandEvent event, string query, string path) {
-    string[] command = this.cfg.searchCommand ~ [`"` ~ query ~ `"`, path]; 
-
-    this.log.infof("running `%s`", command.join(" "));
+    string[] command = this.cfg.searchCommand ~ [`"` ~ query ~ `"`, path];
 
     // Run the process in a shell
     auto process = pipeShell(command.join(" "), Redirect.stdout | Redirect.stderr);
@@ -52,13 +48,11 @@ class MsgLogPlugin : Plugin {
       return;
     }
 
-    this.log.infof("lines: %s", lines);
-
     // Reverse iterate over it, generating lines until we hit the limit
     string[] output;
     int length;
     foreach (line; lines) {
-      if ((length + line.length + 1) > 1994) {
+      if ((length + line.length + 1) > 1993) {
         break;
       }
 
@@ -91,7 +85,7 @@ class MsgLogPlugin : Plugin {
     reverse(output);
 
     // Otherwise dump our messages out
-    event.msg.reply("```" ~ output.join("\n") ~ "```");
+    event.msg.reply("```" ~ output.join("\n") ~ "\n```");
 
   }
 
@@ -166,11 +160,15 @@ class MsgLogPlugin : Plugin {
     this.chans[msg.channelID].flush();
   }
 
-  override void unload() {
-    super.unload();
+  override void unload(Bot bot) {
+    super.unload(bot);
 
     foreach (ref f; this.chans.values) {
       f.close();
     }
   }
+}
+
+extern (C) Plugin create() {
+  return new MsgLogPlugin;
 }
