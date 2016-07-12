@@ -16,14 +16,13 @@ class CorePlugin : Plugin {
   BaseEventListener listener;
 
   this() {
-    PluginConfig cfg;
-    super(cfg);
+    super();
 
     this.counter = new Counter!string;
   }
 
-  override void load(Bot bot) {
-    super.load(bot);
+  override void load(Bot bot, PluginState state = null) {
+    super.load(bot, state);
 
     // Track number of times we've seen each event
     this.listener = this.bot.client.events.listenAll((name, value) {
@@ -119,13 +118,50 @@ class CorePlugin : Plugin {
     }
 
     // Note: this is super unsafe, should always be owner-only
-    auto plugin = this.bot.dynamicLoadPlugin(e.args[0]);
+    auto plugin = this.bot.dynamicLoadPlugin(e.args[0], null);
     e.msg.reply(format("Loaded plugin `%s`", plugin.name));
   }
 
   @Command("list", "list all plugins", "plugin", false, 1)
   void onPluginList(CommandEvent e) {
     e.msg.reply(format("Plugins: `%s`", this.bot.plugins.keys.join(", ")));
+  }
+
+  @Command("save", "save all storage", "", false, 1)
+  void onSave(CommandEvent e) {
+    foreach (plugin; this.bot.plugins.values) {
+      plugin.storage.save();
+    }
+    e.msg.reply("Saved all storage!");
+  }
+
+  @Command("roles", "average role counts", "", false, 1)
+  void onRoles(CommandEvent e) {
+    auto guilds = this.bot.client.state.guilds;
+
+    auto total = 0;
+    foreach (guild; guilds.values) {
+      total += guild.roles.length;
+    }
+    e.msg.reply(format(
+        "Guilds: %s, Roles: %s, Avg: %s",
+        guilds.length,
+        total,
+        total / guilds.length));
+  }
+
+  @Listener!GuildCreate()
+  void onGuildCreate(GuildCreate e) {
+    if (e.guild.id == 157733188964188160) {
+      this.log.infof("Ready to go: %s", e.guild.unavailable);
+    }
+  }
+
+  @Listener!MessageCreate()
+  void onMessageCreate(MessageCreate e) {
+    if (e.message.guild.id == 157733188964188160) {
+      this.log.infof("Ok!");
+    }
   }
 }
 

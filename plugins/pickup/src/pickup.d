@@ -34,9 +34,7 @@ class PickupPlugin : Plugin {
 
   this() {
     this.games = new ModelMap!(Snowflake, PickupGame);
-
-    PluginConfig cfg;
-    super(cfg);
+    super();
   }
 
   PickupGame expectGame(Message msg) {

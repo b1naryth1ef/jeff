@@ -15,11 +15,12 @@ class JeffBot : Bot {
     bc.token = token;
     bc.cmdPrefix = "";
     bc.lvlGetter = (u) => (u.id == this.owner) ? 100 : 0;
-    super(bc, LogLevel.info);
+    super(bc, LogLevel.trace);
 
     // Add some plugins
-    this.dynamicLoadPlugin("plugins/jeffcore/libjeffcore.so");
-    this.dynamicLoadPlugin("plugins/msglog/libmsglog.so");
+    this.dynamicLoadPlugin("plugins/jeffcore/libjeffcore.so", null);
+    this.dynamicLoadPlugin("plugins/utils/libutils.so", null);
+    this.dynamicLoadPlugin("plugins/msglog/libmsglog.so", null);
   }
 }
 

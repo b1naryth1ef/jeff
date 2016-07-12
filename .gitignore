@@ -3,3 +3,6 @@
 !*jeff/
 logs/
 *.so
+config/
+storage/
+*.log

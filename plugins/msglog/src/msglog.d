@@ -12,7 +12,7 @@ import std.stdio,
 import dscord.core;
 
 struct MsgLogConfig {
-  bool console = true;
+  bool console = false;
   bool fs = true;
   bool allowSearch = true;
   string[] searchCommand = ["sift", "-i", "--no-filename"];
@@ -25,8 +25,7 @@ class MsgLogPlugin : Plugin {
   StaticRegex!char searchMatch = ctRegex!(r"^[a-zA-Z0-9_\.\* ]*$");
 
   this() {
-    PluginConfig pcfg;
-    super(pcfg);
+    super();
 
     if (!this.cfg.allowSearch) {
       this.commands["search"].enabled = false;
