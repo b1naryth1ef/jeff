@@ -21,6 +21,7 @@ class JeffBot : Bot {
     this.dynamicLoadPlugin("plugins/jeffcore/libjeffcore.so", null);
     this.dynamicLoadPlugin("plugins/utils/libutils.so", null);
     this.dynamicLoadPlugin("plugins/msglog/libmsglog.so", null);
+    this.dynamicLoadPlugin("plugins/memes/libmemes.so", null);
   }
 }
 

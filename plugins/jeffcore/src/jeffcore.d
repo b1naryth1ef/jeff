@@ -2,18 +2,37 @@ module jeffcore;
 
 import std.format,
        std.conv,
-       std.array;
+       std.array,
+       std.algorithm.iteration;
 
 import dscord.core,
        dscord.util.emitter;
 
-import jeff.util.counter;
+import jeff.util.counter,
+       jeff.util.queue;
 
 import vibe.core.core : sleep;
 
+static private struct MessageHeapItem {
+  Snowflake id;
+  Snowflake authorID;
+
+  this(Message msg) {
+    this.id = msg.id;
+    this.authorID = msg.author.id;
+  }
+}
+
+alias MessageHeap = SizedQueue!(MessageHeapItem);
+
 class CorePlugin : Plugin {
+  size_t messageHistoryCacheSize = 100;
+
   Counter!string counter;
   BaseEventListener listener;
+
+  // Store of messages we've sent
+  MessageHeap[Snowflake] msgHistory;
 
   this() {
     super();
@@ -30,14 +49,74 @@ class CorePlugin : Plugin {
     });
   }
 
-	override void unload(Bot bot) {
+  override void unload(Bot bot) {
     super.unload(bot);
     this.listener.unbind();
-	}
+  }
+
+  // TODO: handle message delete and MessageHeap storage
+  @Listener!MessageCreate()
+  void onMessageCreate(MessageCreate event) {
+    auto msg = event.message;
+
+    // If the channel doesn't exist in our history cache, create a new heap for it
+    if ((msg.channel.id in this.msgHistory) is null) {
+      this.msgHistory[msg.channel.id] = new MessageHeap(this.messageHistoryCacheSize);
+    // Otherwise its possible the history queue is full, so we should clear an item off
+    } else if (this.msgHistory[msg.channel.id].full) {
+      this.msgHistory[msg.channel.id].pop();
+    }
+
+    // Now place it on the queue
+    this.msgHistory[msg.channel.id].push(MessageHeapItem(msg));
+  }
+
+  @Listener!MessageDelete()
+  void onMessageDelete(MessageDelete event) {
+    if ((event.channelID in this.msgHistory) is null) {
+      return;
+    }
+
+    auto msgs = this.msgHistory[event.channelID].array.filter!(msg => msg.id != event.id);
+    this.msgHistory[event.channelID].clear();
+    assert(this.msgHistory[event.channelID].push(msgs.array));
+  }
+
+  // TODO: handle guilddelete/channeldelete for msg history
 
   @Command("ping")
   void onPing(CommandEvent event) {
     event.msg.reply("pong");
+  }
+
+  @Command("clean", "clean previously sent messages", "", false, 1)
+  void onClean(CommandEvent event) {
+    if ((event.msg.channel.id in this.msgHistory) is null || this.msgHistory[event.msg.channel.id].empty) {
+      auto msg = event.msg.reply("No previously sent messages in this channel!");
+      sleep(3.seconds);
+      msg.del();
+      return;
+    }
+
+    // Grab all message ids we created from the history
+    auto msgs = this.msgHistory[event.msg.channel.id].array.filter!(msg =>
+      msg.authorID == this.bot.client.me.id
+    ).map!(msg => msg.id).array;
+
+
+    if (msgs.length <= 2) {
+      foreach (Snowflake id; msgs) {
+        this.bot.client.api.deleteMessage(event.msg.channel.id, id);
+      }
+    } else {
+      this.bot.client.api.bulkDeleteMessages(event.msg.channel.id, msgs.array);
+    }
+
+    auto msg = event.msg.reply(":recycle: :ok_hand:");
+    sleep(3.seconds);
+    // Finally delete the OK hand and original senders message
+    msg.del();
+    event.msg.del();
   }
 
   // Events stuff
@@ -148,20 +227,6 @@ class CorePlugin : Plugin {
         guilds.length,
         total,
         total / guilds.length));
-  }
-
-  @Listener!GuildCreate()
-  void onGuildCreate(GuildCreate e) {
-    if (e.guild.id == 157733188964188160) {
-      this.log.infof("Ready to go: %s", e.guild.unavailable);
-    }
-  }
-
-  @Listener!MessageCreate()
-  void onMessageCreate(MessageCreate e) {
-    if (e.message.guild.id == 157733188964188160) {
-      this.log.infof("Ok!");
-    }
   }
 }
 

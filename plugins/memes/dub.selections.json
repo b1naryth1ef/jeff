@@ -1,0 +1,15 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"dcad": "0.0.1",
+		"dscord": {"path":"../../../dscord/"},
+		"fast": "~master",
+		"jeff": {"path":"../../"},
+		"libasync": "0.7.9",
+		"libevent": "2.0.1+2.0.16",
+		"memutils": "0.4.6",
+		"openssl": "1.1.4+1.0.1g",
+		"shaker": "0.0.7",
+		"vibe-d": "0.7.29"
+	}
+}
