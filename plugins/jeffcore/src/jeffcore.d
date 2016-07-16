@@ -92,9 +92,7 @@ class CorePlugin : Plugin {
   @Command("clean", "clean previously sent messages", "", false, 1)
   void onClean(CommandEvent event) {
     if ((event.msg.channel.id in this.msgHistory) is null || this.msgHistory[event.msg.channel.id].empty) {
-      auto msg = event.msg.reply("No previously sent messages in this channel!");
-      sleep(3.seconds);
-      msg.del();
+      event.msg.reply("No previously sent messages in this channel!").after(3.seconds).del();
       return;
     }
 
@@ -110,9 +108,7 @@ class CorePlugin : Plugin {
     this.client.deleteMessages(event.msg.channel.id, msgs);
 
     // Send OK message, and delete it + command msg after 3 seconds
-    auto msg = event.msg.reply(":recycle: :ok_hand:");
-    sleep(3.seconds);
-    msg.del();
+    event.msg.reply(":recycle: :ok_hand:").after(3.seconds).del();
   }
 
   @Command("counts", "view event counters", "event", false, 1)
