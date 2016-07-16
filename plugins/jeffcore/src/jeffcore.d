@@ -103,23 +103,18 @@ class CorePlugin : Plugin {
       msg.authorID == this.bot.client.me.id
     ).map!(msg => msg.id).array;
 
+    // Add the command-senders message
+    msgs ~= event.msg.id;
 
-    if (msgs.length <= 2) {
-      foreach (Snowflake id; msgs) {
-        this.bot.client.api.deleteMessage(event.msg.channel.id, id);
-      }
-    } else {
-      this.bot.client.api.bulkDeleteMessages(event.msg.channel.id, msgs.array);
-    }
+    // Delete those messages
+    this.client.deleteMessages(event.msg.channel.id, msgs);
 
+    // Send OK message, and delete it + command msg after 3 seconds
     auto msg = event.msg.reply(":recycle: :ok_hand:");
     sleep(3.seconds);
-    // Finally delete the OK hand and original senders message
     msg.del();
-    event.msg.del();
   }
 
-  // Events stuff
   @Command("counts", "view event counters", "event", false, 1)
   void onEventStats(CommandEvent event) {
     ushort numEvents = 5;

@@ -26,6 +26,7 @@ class SizedQueue(T) {
 
   void clear() {
     this.data.removeFront(this.size);
+    this.size = 0;
   }
 
   bool push(T item) {

@@ -16,7 +16,7 @@ class UtilsPlugin : Plugin {
     super(opts);
   }
 
-  void load(Bot bot, PluginState state = null) {
+  override void load(Bot bot, PluginState state = null) {
     super.load(bot, state);
     this.events = this.storage.ensureObject("events");
   }
