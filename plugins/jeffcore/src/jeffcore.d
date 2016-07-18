@@ -89,6 +89,17 @@ class CorePlugin : Plugin {
     event.msg.reply("pong");
   }
 
+  @Command("jumbo", "make an emoji jumbo sized", "", false, 0)
+  void onJumbo(CommandEvent event) {
+    auto custom = event.msg.customEmojiByID();
+
+    if (!custom.length) {
+      return;
+    }
+
+    event.msg.chain.del().reply(format("https://cdn.discordapp.com/emojis/%s.png", custom[0]));
+  }
+
   @Command("clean", "clean previously sent messages", "", false, 1)
   void onClean(CommandEvent event) {
     if ((event.msg.channel.id in this.msgHistory) is null || this.msgHistory[event.msg.channel.id].empty) {
