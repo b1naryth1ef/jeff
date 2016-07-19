@@ -8,6 +8,7 @@ import std.format,
 import dscord.core,
        dscord.util.emitter;
 
+
 import jeff.util.counter,
        jeff.util.queue;
 
@@ -89,18 +90,19 @@ class CorePlugin : Plugin {
     event.msg.reply("pong");
   }
 
-  @Command("jumbo", "make an emoji jumbo sized", "", false, 0)
+  @Command("jumbo")
+  @CommandDescription("make an emoji jumbo sized")
   void onJumbo(CommandEvent event) {
     auto custom = event.msg.customEmojiByID();
 
-    if (!custom.length) {
-      return;
+    if (custom.length) {
+      event.msg.chain.del().replyf("https://cdn.discordapp.com/emojis/%s.png", custom[0]);
     }
-
-    event.msg.chain.del().reply(format("https://cdn.discordapp.com/emojis/%s.png", custom[0]));
   }
 
-  @Command("clean", "clean previously sent messages", "", false, 1)
+  @Command("clean")
+  @CommandDescription("clean chat by deleting previously sent messages")
+  @CommandLevel(1)
   void onClean(CommandEvent event) {
     if ((event.msg.channel.id in this.msgHistory) is null || this.msgHistory[event.msg.channel.id].empty) {
       event.msg.reply("No previously sent messages in this channel!").after(3.seconds).del();
@@ -122,7 +124,10 @@ class CorePlugin : Plugin {
     event.msg.reply(":recycle: :ok_hand:").after(3.seconds).del();
   }
 
-  @Command("counts", "view event counters", "event", false, 1)
+  @Command("counts")
+  @CommandGroup("event")
+  @CommandDescription("view event counters")
+  @CommandLevel(1)
   void onEventStats(CommandEvent event) {
     ushort numEvents = 5;
     if (event.args.length >= 1) {
@@ -134,10 +139,13 @@ class CorePlugin : Plugin {
       parts ~= format("%s: %s", e, this.counter.storage[e]);
     }
 
-    event.msg.reply("```" ~ parts.join("\n") ~ "```");
+    event.msg.replyf("```%s```", parts.join("\n"));
   }
 
-  @Command("show", "show stats on specific event", "event", false, 1)
+  @Command("show")
+  @CommandGroup("event")
+  @CommandDescription("view stats on a specific event")
+  @CommandLevel(1)
   void onEvent(CommandEvent event) {
     if (event.args.length < 1) {
       event.msg.reply("Please pass an event to view");
@@ -150,24 +158,27 @@ class CorePlugin : Plugin {
       return;
     }
 
-    event.msg.reply(format("I've seen %s event a total of `%s` times!", eventName, this.counter.storage[eventName]));
+    event.msg.replyf("I've seen %s event a total of `%s` times!", eventName, this.counter.storage[eventName]);
   }
 
   Plugin pluginCommand(CommandEvent e, string action) {
     if (e.args.length != 1) {
-      e.msg.reply("Must provide a plugin name to " ~ action);
+      e.msg.replyf("Must provide a plugin name to %s", action);
       throw new EmitterStop;
     }
 
     if ((e.args[0] in this.bot.plugins) is null) {
-      e.msg.reply(format("Unknown plugin `%s`", e.args[0]));
+      e.msg.replyf("Unknown plugin `%s`", e.args[0]);
       throw new EmitterStop;
     }
 
     return this.bot.plugins[e.args[0]];
   }
 
-  @Command("reload", "reload a plugin", "plugin", false, 1)
+  @Command("reload")
+  @CommandGroup("plugin")
+  @CommandDescription("reload a plugin")
+  @CommandLevel(1)
   void onPluginReload(CommandEvent e) {
     auto plugin = this.pluginCommand(e, "reload");
 
@@ -175,23 +186,29 @@ class CorePlugin : Plugin {
     //  smashing our stack while we're in another event handler.
     e.event.defer({
       plugin = this.bot.dynamicReloadPlugin(plugin);
-      e.msg.reply(format("Reloaded plugin `%s`", plugin.name));
+      e.msg.replyf("Reloaded plugin `%s`", plugin.name);
     });
   }
 
-  @Command("unload", "unload a plugin", "plugin", false, 1)
+  @Command("unload")
+  @CommandGroup("plugin")
+  @CommandDescription("unload a plugin")
+  @CommandLevel(1)
   void onPluginUnload(CommandEvent e) {
     auto plugin = this.pluginCommand(e, "unload");
 
     // Similar to above, defer unloading the plugin
     e.event.defer({
       // Send the message first or 'plugin' will nullref
-      e.msg.reply(format("Unloaded plugin `%s`", plugin.name));
+      e.msg.replyf("Unloaded plugin `%s`", plugin.name);
       this.bot.unloadPlugin(plugin);
     });
   }
 
-  @Command("load", "load a plugin", "plugin", false, 1)
+  @Command("load")
+  @CommandGroup("plugin")
+  @CommandDescription("load a plugin by path")
+  @CommandLevel(1)
   void onPluginLoad(CommandEvent e) {
     if (e.args.length != 1) {
       e.msg.reply("Must provide a DLL path to load");
@@ -200,35 +217,25 @@ class CorePlugin : Plugin {
 
     // Note: this is super unsafe, should always be owner-only
     auto plugin = this.bot.dynamicLoadPlugin(e.args[0], null);
-    e.msg.reply(format("Loaded plugin `%s`", plugin.name));
+    e.msg.replyf("Loaded plugin `%s`", plugin.name);
   }
 
-  @Command("list", "list all plugins", "plugin", false, 1)
+  @Command("list")
+  @CommandGroup("plugin")
+  @CommandDescription("list all plugins")
+  @CommandLevel(1)
   void onPluginList(CommandEvent e) {
-    e.msg.reply(format("Plugins: `%s`", this.bot.plugins.keys.join(", ")));
+    e.msg.replyf("Plugins: `%s`", this.bot.plugins.keys.join(", "));
   }
 
-  @Command("save", "save all storage", "", false, 1)
+  @Command("save")
+  @CommandDescription("save all storage")
+  @CommandLevel(1)
   void onSave(CommandEvent e) {
     foreach (plugin; this.bot.plugins.values) {
       plugin.storage.save();
     }
     e.msg.reply("Saved all storage!");
-  }
-
-  @Command("roles", "average role counts", "", false, 1)
-  void onRoles(CommandEvent e) {
-    auto guilds = this.bot.client.state.guilds;
-
-    auto total = 0;
-    foreach (guild; guilds.values) {
-      total += guild.roles.length;
-    }
-    e.msg.reply(format(
-        "Guilds: %s, Roles: %s, Avg: %s",
-        guilds.length,
-        total,
-        total / guilds.length));
   }
 }
 
