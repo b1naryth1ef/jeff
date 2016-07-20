@@ -1,13 +1,14 @@
-module utils;
+module events;
 
 import std.conv,
        std.format,
        std.datetime,
        std.array;
 
+import jeff.perms;
 import dscord.core;
 
-class UtilsPlugin : Plugin {
+class EventsPlugin : Plugin {
   VibeJSON events;
 
   this() {
@@ -21,37 +22,48 @@ class UtilsPlugin : Plugin {
     this.events = this.storage.ensureObject("events");
   }
 
-  @Command("add", "add a calendar event", "cal", false, 1)
+  @Command("add")
+  @CommandGroup("cal")
+  @CommandDescription("add a calendar event")
+  @CommandLevel(UserGroup.MOD)
   void addCalendarEvent(CommandEvent e) {
     this.events[e.args[0]] = VibeJSON(e.args[1].to!long);
-    e.msg.reply(format("Ok, added event %s", e.args[0]));
+    e.msg.replyf("Ok, added event %s", e.args[0]);
   }
 
-  @Command("del", "delete a calendar event", "cal", false, 1)
+  @Command("del")
+  @CommandGroup("cal")
+  @CommandDescription("delete a calendar event")
+  @CommandLevel(UserGroup.MOD)
   void delCalendarEvent(CommandEvent e) {
     if (!(e.args[0] in this.events)) {
-      e.msg.reply("Unknown event %s", e.args[0]);
+      e.msg.replyf("Unknown event %s", e.args[0]);
       return;
     }
 
     this.events.remove(e.args[0]);
-    e.msg.reply(format("Ok, removed event %s", e.args[0]));
+    e.msg.replyf("Ok, removed event %s", e.args[0]);
   }
 
-  @Command("until", "time until a calendar event", "cal", false, 0)
+  @Command("until")
+  @CommandGroup("cal")
+  @CommandDescription("time until a calendar event")
   void daysCalendarEvent(CommandEvent e) {
+    this.log.infof("WTF?");
     if (!(e.args[0] in this.events)) {
-      e.msg.reply(format("Unknown event %s", e.args[0]));
+      e.msg.replyf("Unknown event %s", e.args[0]);
       return;
     }
 
 
     auto now = Clock.currTime(UTC());
     auto then = SysTime(unixTimeToStdTime(this.events[e.args[0]].get!int));
-    e.msg.reply(format("%s", then - now));
+    e.msg.replyf("%s", then - now);
   }
 
-  @Command("list", "list calendar events", "cal", false, 0)
+  @Command("list")
+  @CommandGroup("cal")
+  @CommandDescription("list calendar events")
   void listCalendarEvent(CommandEvent e) {
     string[] content;
     auto now = Clock.currTime(UTC());
@@ -61,10 +73,10 @@ class UtilsPlugin : Plugin {
       content ~= format("%s: %s", k, then - now);
     }
 
-    e.msg.reply(format("Events: ```%s```", content.join("\n")));
+    e.msg.replyf("Events: ```%s```", content.join("\n"));
   }
 }
 
 extern (C) Plugin create() {
-  return new UtilsPlugin;
+  return new EventsPlugin;
 }

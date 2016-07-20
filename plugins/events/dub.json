@@ -1,5 +1,5 @@
 {
-  "name": "pickup",
+  "name": "events",
   "targetType": "dynamicLibrary",
   "dependencies": {
     "jeff": {"path": "../../"}

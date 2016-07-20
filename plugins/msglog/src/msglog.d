@@ -9,6 +9,7 @@ import std.stdio,
        std.process,
        std.algorithm;
 
+import jeff.perms;
 import dscord.core;
 
 struct MsgLogConfig {
@@ -88,7 +89,10 @@ class MsgLogPlugin : Plugin {
 
   }
 
-  @Command("search global", "search message logs globally", "log", false, 1)
+  @Command("search global")
+  @CommandDescription("search message logs globally")
+  @CommandGroup("log")
+  @CommandLevel(UserGroup.ADMIN)
   void onSearchCommandGlobal(CommandEvent event) {
     auto match = event.contents.matchFirst(this.searchMatch);
     if (!match.length) {
@@ -100,7 +104,10 @@ class MsgLogPlugin : Plugin {
     this.searchForLogs(event, event.contents, "logs/");
   }
 
-  @Command("search here", "search message logs here", "log", false, 1)
+  @Command("search here")
+  @CommandDescription("search message logs here")
+  @CommandGroup("log")
+  @CommandLevel(UserGroup.MOD)
   void onSearchCommand(CommandEvent event) {
     auto match = event.contents.matchFirst(this.searchMatch);
     if (!match.length) {

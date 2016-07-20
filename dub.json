@@ -7,8 +7,8 @@
   "subPackages": [
     "./plugins/jeffcore/",
     "./plugins/msglog/",
-    "./plugins/pickup/",
-    "./plugins/utils/",
+    "./plugins/events/",
+    "./plugins/mod/",
     "./plugins/memes/"
   ]
 }
