@@ -127,11 +127,11 @@ class MsgLogPlugin : Plugin {
 
   @Listener!MessageCreate()
   void onMessage(MessageCreate event) {
-    string line = format("[%s] (%s | %s) #%s %s: %s\n",
+    string line = format("[%s] (%s) %s #%s %s: %s\n",
       event.message.timestamp,
       event.message.id,
-      event.message.channel ? event.message.channel.id : 0,
-      event.message.channel ? event.message.channel.name : "PM",
+      event.message.guild ? event.message.guild.name : "PM",
+      event.message.channel.name,
       event.message.author.username,
       event.message.content.replace("\n", "\\n"));
 

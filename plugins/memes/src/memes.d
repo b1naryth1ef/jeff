@@ -17,13 +17,8 @@ class MemesPlugin : Plugin {
 
   @Command("is kt good yet")
   void kt(CommandEvent e) {
-    Message m = e.msg.reply(".");
-    sleep(1.seconds);
-    m.edit("..");
-    sleep(1.seconds);
-    m.edit("...");
-    sleep(2.seconds);
-    m.edit("no");
+    e.msg.reply(".").after(1.seconds).edit("..").after(1.seconds)
+      .edit("...").after(2.seconds).edit("no");
   }
 
   @Command("is clockwork good yet")
@@ -33,13 +28,8 @@ class MemesPlugin : Plugin {
 
   @Command("is rhino a nerd")
   void rhino(CommandEvent e) {
-    e.msg.reply("Y");
-    sleep(250.msecs);
-    e.msg.reply("E");
-    sleep(250.msecs);
-    e.msg.reply("S");
-    sleep(250.msecs);
-    e.msg.reply(".");
+    e.msg.reply("Y").after(250.msecs).reply("E").after(250.msecs)
+      .reply("S").after(250.msecs).reply(".");
   }
 }
 

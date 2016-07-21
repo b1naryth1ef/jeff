@@ -49,16 +49,13 @@ class EventsPlugin : Plugin {
   @CommandGroup("cal")
   @CommandDescription("time until a calendar event")
   void daysCalendarEvent(CommandEvent e) {
-    this.log.infof("WTF?");
     if (!(e.args[0] in this.events)) {
       e.msg.replyf("Unknown event %s", e.args[0]);
       return;
     }
 
-
-    auto now = Clock.currTime(UTC());
     auto then = SysTime(unixTimeToStdTime(this.events[e.args[0]].get!int));
-    e.msg.replyf("%s", then - now);
+    e.msg.replyf("%s", then - Clock.currTime(UTC()));
   }
 
   @Command("list")

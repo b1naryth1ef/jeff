@@ -14,6 +14,7 @@ import jeff.perms,
 
 import vibe.core.core : sleep;
 
+// Extra struct used for storing a light amount of message data.
 static private struct MessageHeapItem {
   Snowflake id;
   Snowflake authorID;
@@ -27,6 +28,7 @@ static private struct MessageHeapItem {
 alias MessageHeap = SizedQueue!(MessageHeapItem);
 
 class CorePlugin : Plugin {
+  // Number of messages to keep per channel (in the heap)
   size_t messageHistoryCacheSize = 100;
 
   Counter!string counter;
@@ -78,12 +80,37 @@ class CorePlugin : Plugin {
       return;
     }
 
+    // If the message ID isn't even in the heap, skip it
+    if (event.id < this.msgHistory[event.channelID].peakFront().id) {
+      return;
+    }
+
     auto msgs = this.msgHistory[event.channelID].array.filter!(msg => msg.id != event.id);
     this.msgHistory[event.channelID].clear();
     assert(this.msgHistory[event.channelID].push(msgs.array));
   }
 
-  // TODO: handle guilddelete/channeldelete for msg history
+  @Listener!GuildDelete()
+  void onGuildDelete(GuildDelete event) {
+    auto guild = this.client.state.guilds.get(event.guildID, null);
+
+    if (!guild) {
+      return;
+    }
+
+    foreach (ref channel; guild.channels.keys) {
+      if ((channel in this.msgHistory) !is null) {
+        this.msgHistory.remove(channel);
+      }
+    }
+  }
+
+  @Listener!ChannelDelete()
+  void onChannelDelete(ChannelDelete event) {
+    if ((event.channel.id in this.msgHistory) !is null) {
+      this.msgHistory.remove(event.channel.id);
+    }
+  }
 
   @Command("ping")
   void onPing(CommandEvent event) {
@@ -98,6 +125,16 @@ class CorePlugin : Plugin {
     if (custom.length) {
       event.msg.chain.del().replyf("https://cdn.discordapp.com/emojis/%s.png", custom[0]);
     }
+  }
+
+  @Command("heapstats")
+  @CommandDescription("get stats about the message heap")
+  @CommandLevel(UserGroup.ADMIN)
+  void onHeapStats(CommandEvent event) {
+    string msg = "";
+    msg ~= format("Total Channels: %s\n", this.msgHistory.length);
+    msg ~= format("Total Messages: %s", this.msgHistory.values.map!((m) => m.size).reduce!((x, y) => x + y));
+    event.msg.replyf("```%s```", msg);
   }
 
   @Command("clean")
