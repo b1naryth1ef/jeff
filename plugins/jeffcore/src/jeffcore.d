@@ -80,6 +80,11 @@ class CorePlugin : Plugin {
       return;
     }
 
+    // If the queue is empty just skip this message
+    if (this.msgHistory[event.channelID].size == 0) {
+      return;
+    }
+
     // If the message ID isn't even in the heap, skip it
     if (event.id < this.msgHistory[event.channelID].peakFront().id) {
       return;
