@@ -31,6 +31,11 @@ class MemesPlugin : Plugin {
     e.msg.reply("Y").after(250.msecs).reply("E").after(250.msecs)
       .reply("S").after(250.msecs).reply(".");
   }
+
+  @Command("is bromas an idiot")
+  void bromas(CommandEvent e) {
+    e.msg.reply("yes.");
+  }
 }
 
 extern (C) Plugin create() {
