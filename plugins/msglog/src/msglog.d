@@ -5,6 +5,8 @@ import std.format,
        std.array;
 
 import d2sqlite3;
+import d2sqlite3 : sqlite3Config = config;
+
 import jeff.perms;
 import dscord.core;
 
@@ -14,11 +16,13 @@ class MsgLogPlugin : Plugin {
   this() {
     super();
 
+    sqlite3Config(SQLITE_CONFIG_MULTITHREAD);
     this.db = Database(this.storageDirectoryPath ~ dirSeparator ~ "messages.db");
     this.createTable();
   }
 
   void createTable() {
+    this.db.run(`PRAGMA busy_timeout = 500;`);
     this.db.run(`
       CREATE TABLE IF NOT EXISTS messages (
         id UNSIGNED BIG INT PRIMARY KEY,
@@ -83,25 +87,19 @@ class MsgLogPlugin : Plugin {
     stmt.inject(id);
   }
 
-  string formatResults(ResultRange results) {
-    string content = "\n";
+  MessageBuffer formatResults(ResultRange results) {
+    MessageBuffer msg = new MessageBuffer;
 
     foreach (Row row; results) {
-      string line = format("[%s] (%s / %s) %s: %s",
+      if (!msg.appendf("[%s] (%s / %s) %s: %s",
         row["timestamp"],
         row["guild_name"],
         row["channel_name"],
         row["author_name"],
-        row["content"]);
-
-      if (content.length + line.length > 1990) {
-        break;
-      }
-
-      content ~= line ~ "\n";
+        row["content"])) break;
     }
 
-    return content;
+    return msg;
   }
 
   @Command("stats")
@@ -158,11 +156,12 @@ class MsgLogPlugin : Plugin {
   @CommandLevel(UserGroup.ADMIN)
   void onSearchCommandGlobal(CommandEvent event) {
     Statement query = db.prepare(`
-      SELECT (
+      SELECT
         timestamp, guild_name, channel_name, author_name, content
-      ) FROM messages WHERE
+      FROM messages WHERE
         content LIKE :query AND
         author != :botid;
+      ORDER BY timestamp DESC
     `);
 
     // Bind query
@@ -171,7 +170,7 @@ class MsgLogPlugin : Plugin {
 
     // Grab results and format
     ResultRange results = query.execute();
-    event.msg.replyf("```%s```", this.formatResults(results));
+    event.msg.reply(this.formatResults(results));
   }
 
   @Command("channel")
@@ -180,12 +179,13 @@ class MsgLogPlugin : Plugin {
   @CommandLevel(UserGroup.MOD)
   void onSearchChannelCommand(CommandEvent event) {
     Statement query = db.prepare(`
-      SELECT (
+      SELECT
         timestamp, guild_name, channel_name, author_name, content
-      ) FROM messages WHERE
+      FROM messages WHERE
         content LIKE :query AND
         channel = :channelid AND
-        author != :botid;
+        author != :botid
+      ORDER BY timestamp DESC
     `);
 
     // Bind query
@@ -195,7 +195,7 @@ class MsgLogPlugin : Plugin {
 
     // Grab results and format
     ResultRange results = query.execute();
-    event.msg.replyf("```%s```", this.formatResults(results));
+    event.msg.reply(this.formatResults(results));
   }
 
   @Command("guild")
@@ -208,12 +208,13 @@ class MsgLogPlugin : Plugin {
     }
 
     Statement query = db.prepare(`
-      SELECT (
+      SELECT
         timestamp, guild_name, channel_name, author_name, content
-      ) FROM messages WHERE
+      FROM messages WHERE
         content LIKE :query AND
         guild = :guildid AND
-        author != :botid;
+        author != :botid
+      ORDER BY timestamp DESC
     `);
 
     // Bind query
@@ -223,7 +224,7 @@ class MsgLogPlugin : Plugin {
 
     // Grab results and format
     ResultRange results = query.execute();
-    event.msg.replyf("```%s```", this.formatResults(results));
+    event.msg.reply(this.formatResults(results));
   }
 
   @Listener!MessageCreate()

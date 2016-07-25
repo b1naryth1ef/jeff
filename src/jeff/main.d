@@ -3,6 +3,7 @@ module jeff.main;
 import vibe.core.core;
 
 import std.stdio,
+       std.getopt,
        std.format,
        std.functional,
        std.experimental.logger;
@@ -14,9 +15,11 @@ import dscord.core;
 class JeffBot : Bot {
   immutable Snowflake owner = 80351110224678912;
 
-  this(string token) {
+  this(CommandLineArgs args) {
     BotConfig bc;
-    bc.token = token;
+    bc.token = args.token;
+    bc.shard = args.shard;
+    bc.numShards = args.numShards;
     bc.cmdPrefix = "";
     bc.lvlGetter = toDelegate(&this.levelGetter);
     super(bc, LogLevel.info);
@@ -39,12 +42,31 @@ class JeffBot : Bot {
   }
 }
 
-void main(string[] args) {
-  if (args.length <= 1) {
-    writefln("Usage: %s <token>", args[0]);
+struct CommandLineArgs {
+  string token;
+  ushort shard = 0;
+  ushort numShards = 1;
+}
+
+void main(string[] rawargs) {
+  CommandLineArgs args;
+
+  auto helpInfo = getopt(
+    rawargs,
+    "token", &args.token,
+    "shard", &args.shard,
+    "num-shards", &args.numShards
+  );
+
+  if (helpInfo.helpWanted) {
+    return defaultGetoptPrinter("jeff is friendly", helpInfo.options);
+  }
+
+  if (!args.token) {
+    writeln("Token is required to run");
     return;
   }
 
-  (new JeffBot(args[1])).run();
+  (new JeffBot(args)).run();
   runEventLoop();
 }

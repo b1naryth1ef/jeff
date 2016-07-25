@@ -6,12 +6,11 @@ import std.format,
        std.algorithm.iteration;
 
 import dscord.core,
-       dscord.util.emitter;
+       dscord.util.emitter,
+       dscord.util.queue,
+       dscord.util.counter;
 
-import jeff.perms,
-       jeff.util.counter,
-       jeff.util.queue;
-
+import jeff.perms;
 import vibe.core.core : sleep;
 
 // Extra struct used for storing a light amount of message data.
@@ -81,7 +80,7 @@ class CorePlugin : Plugin {
     }
 
     // If the queue is empty just skip this message
-    if (this.msgHistory[event.channelID].size == 0) {
+    if (this.msgHistory[event.channelID].empty) {
       return;
     }
 
