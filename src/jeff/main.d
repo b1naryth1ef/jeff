@@ -22,7 +22,7 @@ class JeffBot : Bot {
     bc.numShards = args.numShards;
     bc.cmdPrefix = "";
     bc.lvlGetter = toDelegate(&this.levelGetter);
-    super(bc, LogLevel.info);
+    super(bc, LogLevel.trace);
 
     // Add some plugins
     this.dynamicLoadPlugin("plugins/mod/libmod.so", null);
@@ -30,6 +30,7 @@ class JeffBot : Bot {
     this.dynamicLoadPlugin("plugins/events/libevents.so", null);
     this.dynamicLoadPlugin("plugins/msglog/libmsglog.so", null);
     this.dynamicLoadPlugin("plugins/memes/libmemes.so", null);
+    this.dynamicLoadPlugin("plugins/music/libmusic.so", null);
   }
 
   int levelGetter(User u) {

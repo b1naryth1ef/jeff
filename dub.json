@@ -3,12 +3,5 @@
   "targetType": "executable",
   "dependencies": {
     "dscord": {"path": "../dscord/"}
-  },
-  "subPackages": [
-    "./plugins/jeffcore/",
-    "./plugins/msglog/",
-    "./plugins/events/",
-    "./plugins/mod/",
-    "./plugins/memes/"
-  ]
+  }
 }

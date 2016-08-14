@@ -127,7 +127,7 @@ class CorePlugin : Plugin {
     auto custom = event.msg.customEmojiByID();
 
     if (custom.length) {
-      event.msg.chain.del().replyf("https://cdn.discordapp.com/emojis/%s.png", custom[0]);
+      event.msg.chain.maybe.del().replyf("https://cdn.discordapp.com/emojis/%s.png", custom[0]);
     }
   }
 
@@ -274,7 +274,9 @@ class CorePlugin : Plugin {
   @CommandLevel(UserGroup.ADMIN)
   void onSave(CommandEvent e) {
     foreach (plugin; this.bot.plugins.values) {
-      plugin.storage.save();
+      if (plugin.storage) {
+        plugin.storage.save();
+      }
     }
     e.msg.reply("Saved all storage!");
   }

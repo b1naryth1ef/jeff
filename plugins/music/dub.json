@@ -1,0 +1,7 @@
+{
+  "name": "music",
+  "targetType": "dynamicLibrary",
+  "dependencies": {
+    "jeff": {"path": "../../"}
+  }
+}
