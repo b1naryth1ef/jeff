@@ -56,7 +56,7 @@ class MusicPlugin : Plugin {
     return this.cacheDirectory ~ dirSeparator ~ hash ~ ".dca";
   }
 
-  private DCAFile getFromCache(string hash) {
+  DCAFile getFromCache(string hash) {
     if (!this.cacheFiles) return null;
 
     string path = this.cachePathFor(hash);
@@ -67,7 +67,7 @@ class MusicPlugin : Plugin {
     }
   }
 
-  private void saveToCache(DCAFile obj, string hash) {
+  void saveToCache(DCAFile obj, string hash) {
     if (!this.cacheFiles) return;
 
     string path = this.cachePathFor(hash);
@@ -109,7 +109,7 @@ class MusicPlugin : Plugin {
   @CommandDescription("Leave the current voice channel")
   void commandLeave(CommandEvent e) {
     if (this.voiceClients.has(e.msg.guild.id)) {
-      this.voiceClients[e.msg.guild.id].disconnect();
+      this.voiceClients[e.msg.guild.id].disconnect(false);
       this.voiceClients.remove(e.msg.guild.id);
       e.msg.reply("Bye now.");
     } else {
@@ -134,18 +134,39 @@ class MusicPlugin : Plugin {
     }
 
     // TODO: volume control
-    VibeJSON info = YoutubeDL.getInfo(e.args[0]);
+    VibeJSON[] songs = YoutubeDL.getInfo(e.args[0]);
 
-    if (info == VibeJSON.emptyObject) {
+    if (songs.length == 0) {
       e.msg.replyf("Wew there... looks like I could find that URL. Try another one?");
       return;
+    } else if (songs.length == 1) {
+
     }
 
+    MessageBuffer msg = new MessageBuffer(false);
+    bool empty;
+    int missed;
+
+    msg.appendf(":ok_hand: added %s songs:", songs.length);
+    foreach (song; songs) {
+      empty = msg.appendf("%s. %s", this.addFromInfo(client, song), song["title"]);
+      if (!empty) missed++;
+    }
+
+    if (!empty && missed) {
+      msg.popBack();
+      msg.appendf("and %s more songs...", missed);
+    }
+
+    e.msg.reply(msg);
+  }
+
+  ulong addFromInfo(VoiceClient client, VibeJSON song) {
     // Try to grab file from cache, otherwise download directly (and then cache)
-    DCAFile file = this.getFromCache(info["id"].get!string);
+    DCAFile file = this.getFromCache(song["id"].get!string);
     if (!file) {
-      file = YoutubeDL.download(e.args[0]);
-      this.saveToCache(file, info["id"].get!string);
+      file = YoutubeDL.download(song["webpage_url"].get!string);
+      this.saveToCache(file, song["id"].get!string);
     }
 
     DCAPlayable result = new DCAPlayable(file);
@@ -154,11 +175,12 @@ class MusicPlugin : Plugin {
     if (client.playing) {
       auto playlist = cast(DCAPlaylist)(client.playable);
       playlist.add(result);
-      e.msg.replyf(":ok_hand: I've added song `%s` to the queue, in position %s.", info["title"], playlist.length);
+      return playlist.length;
+      // e.msg.replyf(":ok_hand: I've added song `%s` to the queue, in position %s.", info["title"], playlist.length);
     } else {
       auto playlist = new DCAPlaylist([result]);
       client.play(playlist);
-      e.msg.replyf(":ok_hand: Playing your song `%s` now.", info["title"]);
+      return playlist.length;
     }
   }
 
@@ -198,8 +220,13 @@ class MusicPlugin : Plugin {
     }
 
     auto playlist = cast(DCAPlaylist)(client.playable);
-    playlist.next();
-    e.msg.reply("Skipped...");
+    if (e.args.length && e.args[0] == "all") {
+      playlist.empty();
+      e.msg.reply("Skipped all songs.");
+    } else {
+      playlist.next();
+      e.msg.reply("Skipped one song.");
+    }
   }
 
   @Command("resume")
