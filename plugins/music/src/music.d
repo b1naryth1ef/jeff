@@ -4,6 +4,7 @@ import std.path,
        std.file,
        std.stdio,
        std.range,
+       std.variant,
        std.algorithm,
        std.container.dlist;
 
@@ -19,7 +20,6 @@ import dcad.types : DCAFile;
 /**
   TODO:
     - Support saving the current song state
-    - Better playlist support
     - Volume or live muxing
 */
 
@@ -82,6 +82,11 @@ class MusicPlaylist : PlaylistProvider {
 alias VoiceClientMap = ModelMap!(Snowflake, VoiceClient);
 alias MusicPlaylistMap = ModelMap!(Snowflake, MusicPlaylist);
 
+class CustomState {
+  VoiceClientMap voiceClients;
+  MusicPlaylistMap playlists;
+}
+
 class MusicPlugin : Plugin {
   VoiceClientMap voiceClients;
   MusicPlaylistMap playlists;
@@ -91,9 +96,6 @@ class MusicPlugin : Plugin {
   string cacheDirectory;
 
   this() {
-    this.voiceClients = new VoiceClientMap;
-    this.playlists = new MusicPlaylistMap;
-
     auto opts = new PluginOptions;
     opts.useStorage = true;
     opts.useConfig = true;
@@ -102,6 +104,15 @@ class MusicPlugin : Plugin {
 
   override void load(Bot bot, PluginState state = null) {
     super.load(bot, state);
+
+    if (this.state && this.state.custom.hasValue()) {
+      CustomState customState = this.state.custom.get!CustomState;
+      this.voiceClients = customState.voiceClients;
+      this.playlists = customState.playlists;
+    } else {
+      this.voiceClients = new VoiceClientMap;
+      this.playlists = new MusicPlaylistMap;
+    }
 
     if (this.config.has("cache_files")) {
       this.cacheFiles = this.config["cache_files"].get!bool;
@@ -119,6 +130,14 @@ class MusicPlugin : Plugin {
     if (this.cacheFiles && !exists(this.cacheDirectory)) {
       mkdirRecurse(this.cacheDirectory);
     }
+  }
+
+  override void unload(Bot bot) {
+    CustomState state = new CustomState;
+    state.voiceClients = this.voiceClients;
+    state.playlists = this.playlists;
+    this.state.custom = Variant(state);
+    super.unload(bot);
   }
 
   const string cachePathFor(string hash) {
