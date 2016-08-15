@@ -3,9 +3,12 @@ module jeff.main;
 import vibe.core.core;
 
 import std.stdio,
+       std.conv,
+       std.file,
        std.getopt,
        std.format,
        std.functional,
+       std.algorithm.searching,
        std.experimental.logger;
 
 import jeff.perms;
@@ -24,13 +27,14 @@ class JeffBot : Bot {
     bc.lvlGetter = toDelegate(&this.levelGetter);
     super(bc, LogLevel.trace);
 
-    // Add some plugins
-    this.dynamicLoadPlugin("plugins/mod/libmod.so", null);
-    this.dynamicLoadPlugin("plugins/jeffcore/libjeffcore.so", null);
-    this.dynamicLoadPlugin("plugins/events/libevents.so", null);
-    this.dynamicLoadPlugin("plugins/msglog/libmsglog.so", null);
-    this.dynamicLoadPlugin("plugins/memes/libmemes.so", null);
-    this.dynamicLoadPlugin("plugins/music/libmusic.so", null);
+    this.loadPlugins();
+  }
+
+  void loadPlugins() {
+    foreach (path; dirEntries("plugins/", "*.so", SpanMode.depth, false)) {
+      if (path.to!string.canFind(".dub")) continue;
+      this.dynamicLoadPlugin(path, null);
+    }
   }
 
   int levelGetter(User u) {
