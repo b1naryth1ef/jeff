@@ -11,21 +11,24 @@ import std.stdio,
        std.algorithm.searching,
        std.experimental.logger;
 
-import jeff.perms;
+import jeff.perms,
+       jeff.config;
 
 import dscord.core;
 
 class JeffBot : Bot {
-  immutable Snowflake owner = 80351110224678912;
+  JeffConfig config;
 
-  this(CommandLineArgs args) {
+  this(JeffConfig config) {
+    this.config = config;
+
     BotConfig bc;
-    bc.token = args.token;
-    bc.shard = args.shard;
-    bc.numShards = args.numShards;
-    bc.cmdPrefix = "";
-    bc.lvlGetter = toDelegate(&this.levelGetter);
-    super(bc, LogLevel.trace);
+    bc.token = this.config.token;
+    bc.shard = this.config.shard;
+    bc.numShards = this.config.numShards;
+    bc.cmdPrefix = this.config.prefix;
+    bc.levelsEnabled = true;
+    super(bc, this.config.logLevel);
 
     this.loadPlugins();
   }
@@ -33,45 +36,53 @@ class JeffBot : Bot {
   void loadPlugins() {
     foreach (path; dirEntries("plugins/", "*.so", SpanMode.depth, false)) {
       if (path.to!string.canFind(".dub")) continue;
+      this.log.infof("Loading plugin %s", path);
       this.dynamicLoadPlugin(path, null);
     }
   }
 
-  int levelGetter(User u) {
-    if (u.id == this.owner) {
-      return 10000;
+  override int getLevel(User u) {
+    if (u.id == this.config.owner) {
+      return int.max - 1;
     }
 
-    auto obj = cast(UserGroupGetter)this.plugins["mod.ModPlugin"];
-    return obj.getGroup(u);
+    // If we have it in the config
+    if (u.id in this.config.levels) {
+      return this.config.levels[u.id];
+    }
+
+    // If we have the mod plugin, use it for grabbing the group
+    if ("mod.ModPlugin" in this.plugins) {
+      auto obj = cast(UserGroupGetter)this.plugins["mod.ModPlugin"];
+      return obj.getGroup(u);
+    }
+
+    return 0;
   }
 }
 
-struct CommandLineArgs {
-  string token;
-  ushort shard = 0;
-  ushort numShards = 1;
-}
-
 void main(string[] rawargs) {
-  CommandLineArgs args;
+  JeffConfig config = new JeffConfig;
 
   auto helpInfo = getopt(
     rawargs,
-    "token", &args.token,
-    "shard", &args.shard,
-    "num-shards", &args.numShards
+    "token", "Authentication token for the bot account", &config.token,
+    "shard", "Shard number to use when connecting", &config.shard,
+    "num-shards", "Total number of shards active", &config.numShards,
+    "config", "Path to the config file", &config.configPath,
   );
 
   if (helpInfo.helpWanted) {
     return defaultGetoptPrinter("jeff is friendly", helpInfo.options);
   }
 
-  if (!args.token) {
+  config.load();
+
+  if (!config.token) {
     writeln("Token is required to run");
     return;
   }
 
-  (new JeffBot(args)).run();
+  (new JeffBot(config)).run();
   runEventLoop();
 }

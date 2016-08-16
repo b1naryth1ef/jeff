@@ -9,6 +9,7 @@ parser.add_argument('--plugin', action='append', help='additional plugins to bui
 parser.add_argument('--build-dir', default='build', help='directory to build in')
 parser.add_argument('--run', action='store_true', help='run after building')
 parser.add_argument('--build', default='debug', help='dub build mode')
+parser.add_argument('--update', default=False, action='store_true', help='update modules before building')
 
 
 @contextlib.contextmanager
@@ -20,20 +21,20 @@ def cd(directory):
 
 
 def run():
-    pass
+    os.system("./jeff")
 
 
 def dub_cmd(build):
     return 'dub build --combined --parallel --build={}'.format(build)
 
 
-def build_plugin(plugin, plugin_path, command):
+def build_plugin(plugin, plugin_path, command, update):
     print '  Building plugin {}...'.format(plugin)
     author, name = plugin.split('/')
 
     if not os.path.exists(name):
         os.popen('git clone --depth 1 git@github.com:{}.git'.format(plugin))
-    else:
+    elif update:
         with cd(name):
             os.popen('git reset --hard')
             os.popen('git pull')
@@ -48,7 +49,7 @@ def build_plugin(plugin, plugin_path, command):
         os.popen('mv lib{}.so {}'.format(name, plugin_path))
 
 
-def build(build, plugins, directory):
+def build(build, plugins, directory, update):
     print 'Building with {} plugins...'.format(len(plugins))
 
     if not os.path.exists('plugins'):
@@ -61,7 +62,7 @@ def build(build, plugins, directory):
 
     with cd(directory):
         for plugin in plugins:
-            build_plugin(plugin, plugin_path, dub_cmd(build))
+            build_plugin(plugin, plugin_path, dub_cmd(build), update)
 
     print '  Building jeff...'
     os.popen(dub_cmd(build))
@@ -71,7 +72,7 @@ def build(build, plugins, directory):
 def main():
     args = parser.parse_args()
 
-    build(args.build, args.plugin or [], args.build_dir)
+    build(args.build, args.plugin or [], args.build_dir, args.update)
 
     if args.run:
         run()

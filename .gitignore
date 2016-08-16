@@ -1,9 +1,8 @@
 .dub
-*jeff
-!*jeff/
-logs/
+jeff
 *.so
 config/
 storage/
-*.log
+plugins/
 build/
+config.json
