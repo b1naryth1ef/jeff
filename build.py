@@ -27,23 +27,25 @@ def dub_cmd(build):
     return 'dub build --combined --parallel --build={}'.format(build)
 
 
-def build_plugin(build, repo, outpath):
-    author, name = repo.split('/')
+def build_plugin(plugin, plugin_path, command):
+    print '  Building plugin {}...'.format(plugin)
+    author, name = plugin.split('/')
 
     if not os.path.exists(name):
-        os.popen('git clone --depth 1 git@github.com:{}.git'.format(repo))
+        os.popen('git clone --depth 1 git@github.com:{}.git'.format(plugin))
     else:
-        os.popen('git reset --hard')
-        os.popen('git pull')
+        with cd(name):
+            os.popen('git reset --hard')
+            os.popen('git pull')
 
     with cd(name):
-        os.popen(dub_cmd(build))
+        os.popen(command)
 
         if not os.path.exists('lib{}.so'.format(name)):
-            print 'ERROR building {}: no plugin dynamic library found'.format(repo)
+            print 'ERROR building {}: no plugin dynamic library found'.format(plugin)
             return
 
-        os.popen('mv lib{}.so {}'.format(name, outpath))
+        os.popen('mv lib{}.so {}'.format(name, plugin_path))
 
 
 def build(build, plugins, directory):
@@ -59,8 +61,7 @@ def build(build, plugins, directory):
 
     with cd(directory):
         for plugin in plugins:
-            print '  Building plugin {}...'.format(plugin)
-            build_plugin(build, plugin, plugin_path)
+            build_plugin(plugin, plugin_path, dub_cmd(build))
 
     print '  Building jeff...'
     os.popen(dub_cmd(build))
