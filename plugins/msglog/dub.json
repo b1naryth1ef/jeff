@@ -1,9 +1,0 @@
-{
-  "name": "msglog",
-  "targetType": "dynamicLibrary",
-  "dependencies": {
-    "jeff": {"path": "../../"},
-    "d2sqlite3": "~>0.9.7"
-  },
-   "libs": ["sqlite3"]
-}

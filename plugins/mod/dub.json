@@ -1,7 +1,0 @@
-{
-  "name": "mod",
-  "targetType": "dynamicLibrary",
-  "dependencies": {
-    "jeff": {"path": "../../"}
-  }
-}

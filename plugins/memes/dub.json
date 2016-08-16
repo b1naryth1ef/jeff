@@ -1,7 +1,0 @@
-{
-  "name": "memes",
-  "targetType": "dynamicLibrary",
-  "dependencies": {
-    "jeff": {"path": "../../"}
-  }
-}

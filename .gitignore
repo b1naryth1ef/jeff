@@ -6,3 +6,4 @@ logs/
 config/
 storage/
 *.log
+build/
