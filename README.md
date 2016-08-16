@@ -24,3 +24,6 @@ The Jeff binary can be started by simply including the token flag, like so:
 ./jeff --token=MY_DISCORD_BOT_TOKEN
 ```
 
+## Writing Plugins
+For information on how to write your own Jeff plugins, see [this](https://github.com/b1naryth1ef/jeff/wiki/Creating-Plugins) wiki page.
+
