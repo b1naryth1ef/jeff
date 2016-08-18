@@ -70,6 +70,7 @@ void main(string[] rawargs) {
     "shard", "Shard number to use when connecting", &config.shard,
     "num-shards", "Total number of shards active", &config.numShards,
     "config", "Path to the config file", &config.configPath,
+    "threads", "Number of worker threads to run", &config.threads,
   );
 
   if (helpInfo.helpWanted) {
@@ -82,6 +83,8 @@ void main(string[] rawargs) {
     writeln("Token is required to run");
     return;
   }
+
+  setupWorkerThreads(config.threads);
 
   (new JeffBot(config)).run();
   runEventLoop();

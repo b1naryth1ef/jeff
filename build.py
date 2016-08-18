@@ -10,6 +10,7 @@ parser.add_argument('--build-dir', default='build', help='directory to build in'
 parser.add_argument('--run', action='store_true', help='run after building')
 parser.add_argument('--build', default='debug', help='dub build mode')
 parser.add_argument('--update', default=False, action='store_true', help='update modules before building')
+parser.add_argument('--force', default=False, action='store_true', help='force build')
 
 
 @contextlib.contextmanager
@@ -24,8 +25,11 @@ def run():
     os.system("./jeff")
 
 
-def dub_cmd(build):
-    return 'dub build --combined --parallel --build={}'.format(build)
+def dub_cmd(args):
+    extras = ["--build={}".format(args.build)]
+    if args.force:
+        extras.append("--force")
+    return 'dub build --combined --parallel {}'.format(' '.join(extras))
 
 
 def build_plugin(plugin, plugin_path, command, update):
@@ -62,17 +66,17 @@ def build(build, plugins, directory, update):
 
     with cd(directory):
         for plugin in plugins:
-            build_plugin(plugin, plugin_path, dub_cmd(build), update)
+            build_plugin(plugin, plugin_path, build, update)
 
     print '  Building jeff...'
-    os.popen(dub_cmd(build))
+    os.popen(build)
     print 'DONE'
 
 
 def main():
     args = parser.parse_args()
 
-    build(args.build, args.plugin or [], args.build_dir, args.update)
+    build(dub_cmd(args), args.plugin or [], args.build_dir, args.update)
 
     if args.run:
         run()
