@@ -10,7 +10,7 @@ import dscord.types.all,
 class JeffConfig {
   int threads = 4;
 
-  string token;
+  string token = "";
   ushort shard = 0;
   ushort numShards = 1;
   string configPath = "config.json";
@@ -26,8 +26,8 @@ class JeffConfig {
     Storage storage = new Storage(this.configPath);
     storage.load();
 
-    this.token = storage.get!string("token", "");
-    this.prefix = storage.get!string("prefix", "");
+    if (this.token == "") this.token = storage.get!string("token", "");
+    if (this.prefix == "") this.prefix = storage.get!string("prefix", "");
     this.autoReload = storage.get!bool("auto_reload", false);
 
     if (storage.has("sharding")) {
