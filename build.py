@@ -3,6 +3,7 @@ import os
 import sys
 import argparse
 import contextlib
+import subprocess
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--plugin', action='append', help='additional plugins to build')
@@ -11,6 +12,12 @@ parser.add_argument('--run', action='store_true', help='run after building')
 parser.add_argument('--build', default='debug', help='dub build mode')
 parser.add_argument('--update', default=False, action='store_true', help='update modules before building')
 parser.add_argument('--force', default=False, action='store_true', help='force build')
+
+
+def command(cmd):
+    ret = subprocess.check_call(cmd.split(' '))
+    if ret != 0:
+        raise Exception("Error running command `{}`:".format(cmd))
 
 
 @contextlib.contextmanager
@@ -32,25 +39,25 @@ def dub_cmd(args):
     return 'dub build --combined --parallel {}'.format(' '.join(extras))
 
 
-def build_plugin(plugin, plugin_path, command, update):
+def build_plugin(plugin, plugin_path, cmd, update):
     print '  Building plugin {}...'.format(plugin)
     author, name = plugin.split('/')
 
     if not os.path.exists(name):
-        os.popen('git clone --depth 1 git@github.com:{}.git'.format(plugin))
+        command('git clone --depth 1 git@github.com:{}.git'.format(plugin))
     elif update:
         with cd(name):
-            os.popen('git reset --hard')
-            os.popen('git pull')
+            command('git reset --hard')
+            command('git pull')
 
     with cd(name):
-        os.popen(command)
+        command(cmd)
 
         if not os.path.exists('lib{}.so'.format(name)):
             print 'ERROR building {}: no plugin dynamic library found'.format(plugin)
             return
 
-        os.popen('mv lib{}.so {}'.format(name, plugin_path))
+        command('mv lib{}.so {}'.format(name, plugin_path))
 
 
 def build(build, plugins, directory, update):
@@ -69,7 +76,7 @@ def build(build, plugins, directory, update):
             build_plugin(plugin, plugin_path, build, update)
 
     print '  Building jeff...'
-    os.popen(build)
+    command(build)
     print 'DONE'
 
 

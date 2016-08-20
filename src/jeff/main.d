@@ -1,6 +1,7 @@
 module jeff.main;
 
-import vibe.core.core;
+import vibe.core.core,
+       vibe.core.file;
 
 import std.stdio,
        std.conv,
@@ -38,6 +39,38 @@ class JeffBot : Bot {
       if (path.to!string.canFind(".dub")) continue;
       this.log.infof("Loading plugin %s", path);
       this.dynamicLoadPlugin(path, null);
+    }
+
+    // Watch plugins directory if we're auto reloading
+    if (this.config.autoReload) {
+      runTask(&this.pluginReloader, watchDirectory("plugins/"));
+    }
+  }
+
+  void pluginReloader(DirectoryWatcher watch) {
+    DirectoryChange[] changes;
+    Plugin[string] pluginPaths;
+
+    foreach (plugin; this.plugins.values) {
+      pluginPaths[plugin.dynamicLibraryPath] = plugin;
+    }
+
+    while (true) {
+      watch.readChanges(changes);
+
+      foreach (change; changes) {
+        string path = change.path.toString();
+        if (path in pluginPaths) {
+          if (change.type != DirectoryChangeType.removed) {
+            this.log.infof("Detected change in %s, reloading plugin %s", path, pluginPaths[path]);
+            try {
+              pluginPaths[path] = this.dynamicReloadPlugin(pluginPaths[path]);
+            } catch (Exception e) {
+              this.log.warning("Failed to reload plugin %s: %s", pluginPaths[path], e.toString);
+            }
+          }
+        }
+      }
     }
   }
 
@@ -79,7 +112,7 @@ void main(string[] rawargs) {
 
   config.load();
 
-  if (!config.token) {
+  if (config.token == "") {
     writeln("Token is required to run");
     return;
   }
