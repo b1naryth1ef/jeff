@@ -74,6 +74,14 @@ class JeffBot : Bot {
     }
   }
 
+  override int getLevel(Role r) {
+    if (r.id in this.config.levels) {
+      return this.config.levels[r.id];
+    }
+
+    return 0;
+  }
+
   override int getLevel(User u) {
     if (u.id == this.config.owner) {
       return int.max - 1;

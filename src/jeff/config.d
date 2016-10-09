@@ -3,9 +3,8 @@ module jeff.config;
 import std.conv,
        std.experimental.logger;
 
-import dscord.types.all,
+import dscord.types,
        dscord.util.storage;
-
 
 class JeffConfig {
   int threads = 4;
