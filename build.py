@@ -36,7 +36,7 @@ def dub_cmd(args):
     extras = ["--build={}".format(args.build)]
     if args.force:
         extras.append("--force")
-    return 'dub build --combined --parallel {}'.format(' '.join(extras))
+    return 'dub build --parallel {}'.format(' '.join(extras))
 
 
 def build_plugin(plugin, plugin_path, cmd, update):

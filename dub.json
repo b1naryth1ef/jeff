@@ -2,6 +2,16 @@
   "name": "jeff",
   "targetType": "executable",
   "dependencies": {
-    "dscord": {"path": "../dscord/"}
-  }
+    "dscord": "~master"
+  },
+  "configurations": [
+    {
+      "name": "jeff-linux-static-x64",
+      "targetType": "executable",
+      "platforms": ["linux", "X86_64"],
+      "subConfigurations": {
+        "dscord": "dscord-linux-static-x64"
+      }
+    }
+  ]
 }
