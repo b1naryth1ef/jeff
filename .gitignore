@@ -6,3 +6,4 @@ storage/
 plugins/
 build/
 config.json
+dub.selections.json
